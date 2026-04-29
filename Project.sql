@@ -63,7 +63,7 @@ INSERT INTO Employees (
 (1, 'Jan', 'Novak', 1, 20, '2015-01-01', NULL, 200000, NULL, NULL),
 (2, 'Petr', 'Svoboda', 3, 10, '2018-03-01', NULL, 90000, NULL, NULL),
 (3, 'Anna', 'Kralova', 2, 5, '2020-07-01', NULL, 60000, NULL, NULL),
-(4, 'Eva', 'Dvorakova', 4, 7, '2019-09-01', NULL, 50000, NULL, NULL);
+(4, 'Eva', 'Dvorakova', 4, 7, '2019-09-01', NULL, 50000, NULL, NULL),
 (5, 'Lukas', 'Prochazka', 2, 3.5, '2022-05-01', NULL, 50000, 1, 2),
 (6, 'Tomas', 'Cerny', 2, 6.0, '2021-02-15', NULL, 65000, 1, 2),
 (7, 'Katerina', 'Vesela', 2, 4.2, '2022-08-10', NULL, 58000, 1, 2),
@@ -148,3 +148,79 @@ RIGHT JOIN Teams t ON e.team_id = t.team_id;
 SELECT e.first_name, t.team_name
 FROM Employees e
 FULL JOIN Teams t ON e.team_id = t.team_id;
+
+-- counting employees in each team and then by role
+
+SELECT team_id, COUNT(*) AS employee_count
+FROM Employees
+GROUP BY team_id;
+
+SELECT role_id, COUNT(*) AS employee_count
+FROM Employees
+GROUP BY role_id;
+
+-- counting employees in teams where count is more than 5
+
+SELECT team_id, COUNT(*) AS employee_count
+FROM Employees
+GROUP BY team_id
+HAVING COUNT(*) > 5;
+
+-- selecting roles where average salari is above 70k
+
+SELECT role_id, AVG(salary) AS avg_salary
+FROM Employees
+GROUP BY role_id
+HAVING AVG(salary) > 70000;
+
+-- selecting employees working in teams with more than 5 members
+
+SELECT *
+FROM Employees
+WHERE team_id IN (
+    SELECT team_id
+    FROM Employees
+    GROUP BY team_id
+    HAVING COUNT(*) > 5);
+
+-- finding out average salary of departments. connecting employees to department through teams
+
+SELECT 
+    d.department_name,
+    AVG(e.salary) AS avg_salary
+FROM Employees e
+JOIN Teams t ON e.team_id = t.team_id
+JOIN Departments d ON t.department_id = d.department_id
+GROUP BY d.department_name;
+  
+-- finding out the sum of salaries of employees by their department, where it is more than a given number.
+
+SELECT 
+    d.department_name,
+    SUM(e.salary) AS total_salary
+FROM Employees e
+JOIN Teams t ON e.team_id = t.team_id
+JOIN Departments d ON t.department_id = d.department_id
+GROUP BY d.department_name
+HAVING SUM(e.salary) > 300000;
+
+-- getting employees in a ordered list by their salary 
+
+SELECT 
+    first_name,
+    last_name,
+    salary,
+    ROW_NUMBER() OVER (ORDER BY salary DESC) AS salary_rank
+FROM Employees;
+
+-- ranking each eamployees within each team
+
+SELECT 
+    first_name,
+    team_id,
+    salary,
+    ROW_NUMBER() OVER (
+        PARTITION BY team_id
+        ORDER BY salary DESC
+    ) AS rank_in_team
+FROM Employees;
